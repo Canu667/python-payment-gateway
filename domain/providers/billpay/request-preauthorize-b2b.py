@@ -1,4 +1,4 @@
-from PreauthorizeRequest import CompanyDetails, PreauthorizeRequest, PreauthorizeResponse, CustomerDetails, Total, Article
+from PreauthorizeRequest import preauthorize, CompanyDetails, PreauthorizeRequest, CustomerDetails, Total, Article
 import xml.etree.cElementTree as ET
 import requests
 import os
@@ -8,6 +8,7 @@ obj = PreauthorizeRequest()
 obj.mid = os.environ['BILLPAY_MERCHANT_ID']
 obj.pid = os.environ['BILLPAY_BUSINESS_PORTAL_ID']
 obj.password_hash = os.environ['BILLPAY_BUSINESS_PASSWORD_HASH']
+obj.type_capture = PreauthorizeRequest.CAPTURE_MANUAL
 
 customer_details = CustomerDetails()
 customer_details.customer_id = 123456
@@ -46,7 +47,7 @@ total.rebate_gross = 0
 total.order_amount_net = 1250
 total.order_amount_gross = 1475
 total.currency = "EUR"
-total.reference = "0000003"
+total.reference = "0000005"
 obj.total = total
 
 article = Article()
@@ -75,5 +76,5 @@ r = requests.post('https://test-api.billpay.de/v2/xml/offline/preauthorize', dat
 print("\nResponse Received: {}".format(r.text))
 
 if r.status_code == 200:
-    response = PreauthorizeResponse(r.text)
+    response = preauthorize(r.text)
     print("\nThe response:\n{}".format(response))

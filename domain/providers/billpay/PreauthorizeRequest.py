@@ -1,17 +1,23 @@
 from DefaultRequest import DefaultRequest, ET
+from CommonNodes import BillpayNode, CustomerRestriction, InvoiceBankAccount, PaylaterDetailsNode
+from typing import Optional
+
 
 class CustomerDetails:
     GUEST = 'g'
     EXISTING_CUSTOMER = 'e'
     NEW_CUSTOMER = 'n'
-
+    
+    GROUP_BUSINESS = 'b'
+    GROUP_PRIVATE = 'p'
+    
     def __init__(self):
         self.customer_id = ''
         self.customer_type = ''
         self.salutation = ''
         self.title = ''
-        self.firstname = ''
-        self.lastname = ''
+        self.first_name = ''
+        self.last_name = ''
         self.street = ''
         self.street_no = ''
         self.address_addition = ''
@@ -25,7 +31,6 @@ class CustomerDetails:
         self.language = ''
         self.ip = ''
         self.customer_group = ''
-
 
         @property
         def customer_type(self) -> str:
@@ -52,8 +57,8 @@ class CustomerDetails:
             'customertype': str(self.customer_type),
             'salutation': str(self.salutation),
             'title': str(self.title),
-            'firstname': str(self.firstname),
-            'lastname': str(self.lastname),
+            'firstname': str(self.first_name),
+            'lastname': str(self.last_name),
             'street': str(self.street),
             'streetnumber': str(self.street_no),
             'city': str(self.city),
@@ -68,9 +73,10 @@ class CustomerDetails:
             'customergroup': str(self.customer_group),
         }
 
+
 class ShippingDetails:
     def __init__(self):
-        self.usebillingaddress = 1
+        self.use_billing_address = 1
         self.salutation = ""
         self.title = ""
         self.first_name = ""
@@ -85,64 +91,66 @@ class ShippingDetails:
         self.cellphone = ""
 
     def build(self):
-        if self.usebillingaddress == 1:
+        if self.use_billing_address == 1:
             return {'usebillingaddress' : "1"}
 
         return { key.replace("_", ""):str(value) for key,value in self.__dict__.items()}
 
-class BillpayNode:
-    def build(self):
-        return { key.replace("_", ""):str(value) for key,value in self.__dict__.items()}
 
 class CompanyDetails(BillpayNode):
     def __init__(self):
         self.name = ""
-        self.legalform = ""
-        self.registernumber = ""
-        self.holdername = ""
-        self.taxnumber = ""
+        self.legal_form = ""
+        self.register_number = ""
+        self.holder_name = ""
+        self.tax_number = ""
+
 
 class Article(BillpayNode):
     def __init__(self):
-        self.articleid = ""
-        self.articlename = ""
-        self.articletype = 0
-        self.articlequantity = 0
-        self.articlepricenet = 0
-        self.articlepricegross = 0
-        self.articlecategory = ""
-        self.articlesubcategory1 = ""
-        self.articlesubcategory2 = ""
+        self.article_id = ""
+        self.article_name = ""
+        self.article_type = 0
+        self.article_quantity = 0
+        self.article_price_net = 0
+        self.article_price_gross = 0
+        self.article_category = ""
+        self.article_sub_category1 = ""
+        self.article_sub_category2 = ""
+
 
 class BankAccount(BillpayNode):
     def __init__(self):
-        self.accountholder = ''
-        self.accountnumber = ''
-        self.sortcode = ''
+        self.account_holder = ''
+        self.account_number = ''
+        self.sort_code = ''
+
 
 class Total(BillpayNode):
     def __init__(self):
-        self.shippingname = ''
-        self.shippingpricenet = 0
-        self.shippingpricegross = 0
-        self.rebatenet = 0
-        self.rebategross = 0
-        self.orderamountnet = 0
-        self.orderamountgross = 0
+        self.shipping_name = ''
+        self.shipping_price_net = 0
+        self.shipping_price_gross = 0
+        self.rebate_net = 0
+        self.rebate_gross = 0
+        self.order_amount_net = 0
+        self.order_amount_gross = 0
         self.currency = ''
         self.reference = ''
-        self.merchantinvoicenumber = ''
-        self.trackingnumber = ''
+        self.merchant_invoice_number = ''
+        self.tracking_number = ''
+
 
 class FraudDetection(BillpayNode):
     def __init__(self):
-        self.sessionid = ''
+        self.session_id = ''
+
 
 class RateRequest(BillpayNode):
     def __init__(self):
-        self.ratecount = ''
-        self.terminmonths = ''
-        self.totalamountgross = ''
+        self.rate_count = ''
+        self.termin_months = ''
+        self.total_amount_gross = ''
 
 class AsyncRequest():
     def __init__(self):
@@ -152,27 +160,74 @@ class AsyncRequest():
     def build(self):
         return self.__dict__.items()
 
+
 class PreauthorizeRequest(DefaultRequest):
-    INVOICE = 'invoice'
+    INVOICE = 1
+    DIRECT_DEBIT = 2
+    TRANSACTION_CREDIT = 3
+    PAYLATER = 4
+    
+    CAPTURE_AUTO = 0
+    CAPTURE_MANUAL = 1
+    
+    TERMS_AND_CONDITIONS_ACCEPTED = 1
+    TERMS_AND_CONDITIONS_NOT_ACCEPTED = 0
+    
+    ORIGIN_UNKNOWN = 'u'
+    ORIGIN_ONLINE_SHOP = 'o'
+    ORIGIN_OFFLINE = 'p'
+    ORIGIN_TELESALES = 't'
 
-    def __init__(self, payment_method: str):
+    def __init__(self):
         super().__init__()
-        self._requesttype = "PREAUTHORIZE"
-
-        if payment_method not in [PreauthorizeRequest.INVOICE]:
-            raise ValueError("Payment method {} for Billpay not recognised".format(payment_method))
-
-        self._payment_method = payment_method
-        self.customer_details = None
-        self.shipping_details = ShippingDetails()
-        self.total = None
+        self._request_type = "PREAUTHORIZE"
+        
+        self._customer_details = CustomerDetails()
+        self._shipping_details = ShippingDetails()
+        self._total = Total()
+        self._company_details = None
+        self._rate_request = None
+        self._fraud_detection = None
+        self._bank_account = None
         self._articles = []
-        self.params['requesttype'] = self._requesttype
-        self.params['tcaccepted'] = "1"
-        self.params['expecteddaystillshipping'] = "0"
-        self.params['manualcapture'] = "0"
-        self.params['paymenttype'] = "1"
-        self.params['originofsale'] = "o"
+
+        self.type_capture = PreauthorizeRequest.CAPTURE_MANUAL
+        self.origin_of_sale = PreauthorizeRequest.ORIGIN_ONLINE_SHOP
+        self.payment_type = PreauthorizeRequest.INVOICE
+        self.terms_accepted = PreauthorizeRequest.TERMS_AND_CONDITIONS_ACCEPTED
+        self.expected_day_shipping = "0"
+
+    @property
+    def bank_account(self) -> Optional[BankAccount]:
+        return self._bank_account
+
+    @bank_account.setter
+    def bank_account(self, value: BankAccount):
+        self._bank_account = value
+
+    @property
+    def company_details(self) -> Optional[CompanyDetails]:
+        return self._company_details
+
+    @company_details.setter
+    def company_details(self, value: CompanyDetails):
+        self._company_details = value
+
+    @property
+    def rate_request(self) -> Optional[RateRequest]:
+        return self._rate_request
+
+    @rate_request.setter
+    def rate_request(self, value: RateRequest):
+        self._rate_request = value
+
+    @property
+    def fraud_detection(self) -> Optional[FraudDetection]:
+        return self._fraud_detection
+
+    @fraud_detection.setter
+    def fraud_detection(self, value: FraudDetection):
+        self._fraud_detection = value
 
     @property
     def customer_details(self) -> CustomerDetails:
@@ -202,93 +257,110 @@ class PreauthorizeRequest(DefaultRequest):
         self._articles.append(value)
 
     def build(self):
+        self.params['requesttype'] = str(self._request_type)
+        self.params['tcaccepted'] = str(self.terms_accepted)
+        self.params['expecteddaystillshipping'] = str(self.expected_day_shipping)
+        self.params['manualcapture'] = str(self.type_capture)
+        self.params['paymenttype'] = str(self.payment_type)
+        self.params['originofsale'] = str(self.origin_of_sale)
+
         data = super().build()
 
-        ET.SubElement(data, "customer_details", self._customer_details.build())
+        ET.SubElement(data, "customer_details", self._customer_details.build()) 
+        
+        if self._company_details is not None:
+            ET.SubElement(data, "company_details", self._company_details.build())
+        
         ET.SubElement(data, "shipping_details", self._shipping_details.build())
         ET.SubElement(data, "total", self._total.build())
 
-        article_node =  ET.SubElement(data, "article_data")
+        article_node = ET.SubElement(data, "article_data")
         for article in self._articles:
             ET.SubElement(article_node, "article", article.build())
 
+        if self._bank_account is not None:
+            ET.SubElement(data, "bank_account", self._bank_account.build())
+
+        if self._fraud_detection is not None:
+            ET.SubElement(data, "fraud_detection", self._fraud_detection.build())
+
+        if self._rate_request is not None:
+            ET.SubElement(data, "rate_request", self._rate_request.build())
+
         return data
 
-class PreauthorizeResponse:
-    def __init__(self, xml: str):
-        root = ET.fromstring(xml)
 
+def preauthorize(xml: str):
+    root = ET.fromstring(xml)
+    error_code = int(root.attrib['errorcode'])
+
+    if error_code == 0:
+        return PreauthorizeResponse(root)
+    else:
+        return ErrorResponse(root)
+
+
+class ErrorResponse:
+    def __init__(self, root: ET):
         self.customer_message = root.attrib['customermessage']
         self.developer_message = root.attrib['developermessage']
-        self.errorcode = int(root.attrib['errorcode'])
-        self.merchantmessage = root.attrib['merchantmessage']
-        self.responsetype = root.attrib['responsetype']
+        self.error_code = int(root.attrib['errorcode'])
+        self.merchant_message = root.attrib['merchantmessage']
+        self.response_type = root.attrib['responsetype']
 
-        valid_response = True if self.errorcode == 0 else False
+    def __str__(self):
+        return ('ErrorReponse(\n'
+                'customer_message: {customer_message}\n'
+                'developer_message: {developer_message}\n'
+                'error_code: {error_code}\n'
+                'merchant_message: {merchant_message}\n'
+                'response_type: {response_type}'
+                ')\n').format(**self.__dict__)
 
-        self.status = root.attrib['status'] if valid_response else None
-        self.transactionid = root.attrib['transactionid'] if valid_response else None
-        self.invoice_bank_account = InvoiceBankAccount(root) if valid_response else None
-        self.customer_restriction = CustomerRestriction(root) if valid_response else None
 
-        self.corrected_address = CorrectedAddress(root)
+class PreauthorizeResponse():
+    def __init__(self, root: ET):
+        self.response_type = root.attrib['responsetype']
+        self.error_code = int(root.attrib['errorcode'])
+        self.status = root.attrib['status']
+        self.transaction_id = root.attrib['transactionid']
+        self.customer_restriction = CustomerRestriction(root)
+
+        invoice_bank_account = root.find('./invoice_bank_account')
+        self.invoice_bank_account = InvoiceBankAccount(root) if invoice_bank_account else None
+
+        instalment_details = root.find('./instalment_details')
+        self.instalment_details = PaylaterDetailsNode(instalment_details) if instalment_details else None
+
+        corrected_address_node = root.find('./corrected_address')
+        self.corrected_address = CorrectedAddress(corrected_address_node) if corrected_address_node else None
 
     def __str__(self):
         return ('PreauthorizeResponse(\n'
-                'customer_message: {customer_message}\n'
-                'developer_message: {developer_message}\n'
-                'errorcode: {errorcode}\n'
-                'merchantmessage: {merchantmessage}\n'
-                'responsetype: {responsetype}\n'
+                'error_code: {error_code}\n'
+                'response_type: {response_type}\n'
                 'status: {status}\n'
-                'transactionid: {transactionid}\n'
+                'transaction_id: {transaction_id}\n'
                 'invoice_bank_account: {invoice_bank_account}\n'
                 'customer_restriction: {customer_restriction}\n'
                 'corrected_address: {corrected_address})\n'
+                'instalment_details: {instalment_details})\n'
                 ).format(**self.__dict__)
 
+
 class CorrectedAddress:
-    def __init__(self, root: ET):
-        corrected_address_node = root.find('./corrected_address')
+    def __init__(self, corrected_address_node: ET):
         self.city = corrected_address_node.attrib['city']
         self.country = corrected_address_node.attrib['country']
         self.street = corrected_address_node.attrib['street']
-        self.streetnumber = corrected_address_node.attrib['streetnumber']
+        self.street_number = corrected_address_node.attrib['streetnumber']
         self.zipcode = corrected_address_node.attrib['zipcode']
+
     def __str__(self):
         return ('CorrectedAddress(\n'
                 'city: {city}\n'
                 'country: {country}\n'
                 'street: {street}\n'
-                'streetnumber: {streetnumber}\n'
+                'street_number: {street_number}\n'
                 'zipcode: {zipcode})\n'
-                ).format(**self.__dict__)
-
-class InvoiceBankAccount:
-    def __init__(self, root: ET):
-        invoice_bank_account_node = root.find('./invoice_bank_account')
-        self.accountholder = invoice_bank_account_node.attrib['accountholder']
-        self.accountnumber = invoice_bank_account_node.attrib['accountnumber']
-        self.activationperformed = invoice_bank_account_node.attrib['activationperformed']
-        self.bankcode = invoice_bank_account_node.attrib['bankcode']
-        self.bankname = invoice_bank_account_node.attrib['bankname']
-        self.invoiceduedate = invoice_bank_account_node.attrib['invoiceduedate']
-        self.invoicereference = invoice_bank_account_node.attrib['invoicereference']
-    def __str__(self):
-        return ('InvoiceBankAccount(\n'
-                'accountholder: {accountholder}\n'
-                'accountnumber: {accountnumber}\n'
-                'activationperformed: {activationperformed}\n'
-                'bankcode: {bankcode}\n'
-                'bankname: {bankname}\n'
-                'invoiceduedate: {invoiceduedate}\n'
-                'invoicereference: {invoicereference})\n'
-                ).format(**self.__dict__)
-
-class CustomerRestriction:
-    def __init__(self, root: ET):
-        customer_restriction_node = root.find('./customer_restriction')
-        self.shippingtypeobligation = customer_restriction_node.attrib['shippingtypeobligation']
-    def __str__(self):
-        return ('CustomerRestriction(shippingtypeobligation: {shippingtypeobligation}'
                 ).format(**self.__dict__)

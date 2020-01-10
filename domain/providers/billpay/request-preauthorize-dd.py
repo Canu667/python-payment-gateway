@@ -1,4 +1,4 @@
-from PreauthorizeRequest import PreauthorizeRequest, BankAccount, PreauthorizeResponse, CustomerDetails, Total, Article
+from PreauthorizeRequest import preauthorize, PreauthorizeRequest, BankAccount, CustomerDetails, Total, Article
 import xml.etree.cElementTree as ET
 import requests
 import os
@@ -73,5 +73,5 @@ r = requests.post('https://test-api.billpay.de/v2/xml/offline/preauthorize', dat
 print("\nResponse Received: {}".format(r.text))
 
 if r.status_code == 200:
-    response = PreauthorizeResponse(r.text)
+    response = preauthorize(r.text)
     print("\nThe response:\n{}".format(response))

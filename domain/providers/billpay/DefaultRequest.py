@@ -1,16 +1,17 @@
 import xml.etree.cElementTree as ET
 import hashlib
 
-class DefaultRequest():
+
+class DefaultRequest:
     def __init__(self):
-        self._requesttype = ""
-        self.apiversion = "2.2.0"
+        self._request_type = ""
+        self.api_version = "2.2.0"
         self.mid = ""
         self.pid = ""
-        self.passwordhash = ""
+        self.password_hash = ""
         self.params = {
-            'requesttype' : self._requesttype,
-            'apiversion' : self.apiversion
+            'requesttype': self._request_type,
+            'apiversion': self.api_version
         }
 
     def build(self):
@@ -20,7 +21,7 @@ class DefaultRequest():
         ET.SubElement(data, "default_params",
                       mid=self.mid,
                       pid=self.pid,
-                      passwordhash=hashlib.md5(self.passwordhash.encode('utf-8')).hexdigest()
+                      passwordhash=hashlib.md5(self.password_hash.encode('utf-8')).hexdigest()
                       )
 
         return data

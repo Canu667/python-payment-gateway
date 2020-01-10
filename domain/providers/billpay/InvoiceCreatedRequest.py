@@ -1,5 +1,5 @@
 from DefaultRequest import DefaultRequest, ET
-from CommonNodes import InvoiceBankAccount
+from CommonNodes import InvoiceBankAccount, PaylaterDetailsNode
 
 
 class InvoiceCreatedRequest(DefaultRequest):
@@ -8,7 +8,7 @@ class InvoiceCreatedRequest(DefaultRequest):
 
     def __init__(self, invoice_amount_gross: int, currency: str, reference: str, delivery_delay_in_days: int):
         super().__init__()
-        self._request_type = "INVOICE_CREATED"
+        self.params['requesttype'] = "INVOICE_CREATED"
 
         self.invoice_amount_net = 0
         self.invoice_amount_gross = invoice_amount_gross
@@ -46,22 +46,38 @@ class InvoiceCreatedRequest(DefaultRequest):
         return data
 
 
-class InvoiceCreatedResponse():
-    def __init__(self, xml: str):
-        root = ET.fromstring(xml)
+def create_response(xml: str):
+    root = ET.fromstring(xml)
+    error_code = int(root.attrib['errorcode'])
 
+    if error_code == 0:
+        return InvoiceCreatedResponse(root)
+    else:
+        return ErrorResponse(root)
+
+
+class ErrorResponse:
+    def __init__(self, root: ET):
         self.customer_message = root.attrib['customermessage']
         self.developer_message = root.attrib['developermessage']
-        self.merchant_message = root.attrib['merchantmessage']
         self.error_code = int(root.attrib['errorcode'])
+        self.merchant_message = root.attrib['merchantmessage']
         self.response_type = root.attrib['responsetype']
 
-        valid_response = self.is_successful()
+    def __str__(self):
+        return ('ErrorReponse(\n'
+                'customer_message: {customer_message}\n'
+                'developer_message: {developer_message}\n'
+                'error_code: {error_code}\n'
+                'merchant_message: {merchant_message}\n'
+                'response_type: {response_type}'
+                ')\n').format(**self.__dict__)
 
-        if valid_response and root.find('./invoice_bank_account') is not None:
-            self.invoice_bank_account = InvoiceBankAccount(root)
-        else:
-            self.invoice_bank_account = None
 
-    def is_successful(self):
-        return True if self.error_code == 0 else False
+class InvoiceCreatedResponse():
+    def __init__(self, root: ET):
+        invoice_bank_account = root.find('./invoice_bank_account')
+        self.invoice_bank_account = InvoiceBankAccount(root) if invoice_bank_account else None
+
+        instalment_details = root.find('./instalment_details')
+        self.instalment_details = PaylaterDetailsNode(instalment_details) if instalment_details else None
