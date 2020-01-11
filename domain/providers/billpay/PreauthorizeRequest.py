@@ -1,5 +1,5 @@
-from DefaultRequest import DefaultRequest, DefaultResponse, ET
-from CommonNodes import BillpayNode, CustomerRestriction, InvoiceBankAccount, PaylaterDetailsNode
+from .DefaultRequest import DefaultRequest, DefaultResponse, ET
+from .CommonNodes import BillpayNode, CustomerRestriction, InvoiceBankAccount, PaylaterDetailsNode
 from typing import Optional
 
 

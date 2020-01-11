@@ -1,5 +1,5 @@
-from DefaultRequest import DefaultRequest, DefaultResponse, ET
-from CommonNodes import InvoiceBankAccount, PaylaterDetailsNode
+from .DefaultRequest import DefaultRequest, DefaultResponse, ET
+from .CommonNodes import InvoiceBankAccount, PaylaterDetailsNode
 
 
 class InvoiceCreatedRequest(DefaultRequest):

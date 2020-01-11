@@ -1,8 +1,8 @@
-from PreauthorizeRequest import CompanyDetails, PreauthorizeRequest, CustomerDetails, Total, Article
-from CaptureRequest import CaptureRequest
-from BillpayClient import BillpayClient
-from InvoiceCreatedRequest import InvoiceCreatedRequest
-from CancelRequest import CancelRequest
+from domain.providers.billpay.PreauthorizeRequest import CompanyDetails, PreauthorizeRequest, CustomerDetails, Total, Article
+from domain.providers.billpay.CaptureRequest import CaptureRequest
+from domain.providers.billpay.BillpayClient import BillpayClient
+from domain.providers.billpay.InvoiceCreatedRequest import InvoiceCreatedRequest
+from domain.providers.billpay.CancelRequest import CancelRequest
 import os
 import sys
 import time
@@ -10,7 +10,8 @@ import time
 manager = BillpayClient(
     mid=os.environ['BILLPAY_MERCHANT_ID'],
     pid=os.environ['BILLPAY_BUSINESS_PORTAL_ID'],
-    password_hash=os.environ['BILLPAY_BUSINESS_PASSWORD_HASH']
+    password_hash=os.environ['BILLPAY_BUSINESS_PASSWORD_HASH'],
+    url=os.environ['BILLPAY_API_URL'],
 )
 customer_reference = str(int(time.time())) + "TEST"
 print("Reference used: {}".format(customer_reference))

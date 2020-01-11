@@ -1,4 +1,4 @@
-from DefaultRequest import DefaultRequest, DefaultResponse, ET
+from .DefaultRequest import DefaultRequest, DefaultResponse, ET
 
 
 class CancelRequest(DefaultRequest):

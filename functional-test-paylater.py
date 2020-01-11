@@ -1,8 +1,7 @@
-from PreauthorizeRequest import PreauthorizeRequest, CustomerDetails, Total, Article
-from CaptureRequest import CaptureRequest
-from BillpayClient import BillpayClient
-from InvoiceCreatedRequest import InvoiceCreatedRequest
-from CancelRequest import CancelRequest
+from billpay.PreauthorizeRequest import PreauthorizeRequest, CustomerDetails, Total, Article, BankAccount, RateRequest
+from billpay.BillpayClient import BillpayClient
+from billpay.InvoiceCreatedRequest import InvoiceCreatedRequest
+from billpay.CancelRequest import CancelRequest
 import os
 import sys
 import time
@@ -10,13 +9,16 @@ import time
 manager = BillpayClient(
     mid=os.environ['BILLPAY_MERCHANT_ID'],
     pid=os.environ['BILLPAY_PORTAL_ID'],
-    password_hash=os.environ['BILLPAY_PASSWORD_HASH']
+    password_hash=os.environ['BILLPAY_PASSWORD_HASH'],
+    url=os.environ['BILLPAY_API_URL'],
 )
 customer_reference = str(int(time.time())) + "TEST"
 print("Reference used: {}".format(customer_reference))
 
 obj = PreauthorizeRequest()
-obj.type_capture = PreauthorizeRequest.CAPTURE_MANUAL
+obj.terms_accepted = PreauthorizeRequest.TERMS_AND_CONDITIONS_ACCEPTED
+obj.payment_type = PreauthorizeRequest.PAYLATER
+obj.type_capture = PreauthorizeRequest.CAPTURE_AUTO
 
 customer_details = CustomerDetails()
 customer_details.customer_id = 123456
@@ -38,35 +40,46 @@ customer_details.ip = "85.214.7.10"
 customer_details.customer_group = CustomerDetails.GROUP_PRIVATE
 obj.customer_details = customer_details
 
-total = Total()
-total.shipping_name = "Express-Versand"
-total.shipping_price_net = 500
-total.shipping_price_gross = 650
-total.rebate_net = 0
-total.rebate_gross = 0
-total.order_amount_net = 1250
-total.order_amount_gross = 1475
-total.currency = "EUR"
-total.reference = customer_reference
-obj.total = total
-
 article = Article()
 article.article_id = "1234"
 article.article_name = "test1"
 article.article_type = "0"
-article.article_quantity = "1"
-article.article_price_net = "250"
-article.article_price_gross = "275"
+article.article_quantity = 1
+article.article_price_net = 33529
+article.article_price_gross = 39900
 obj.add_article(article)
 
 article2 = Article()
 article2.article_id = "2345"
 article2.article_name = "test2"
 article2.article_type = "0"
-article2.article_quantity = "2"
-article2.article_price_net = "250"
-article2.article_price_gross = "275"
+article2.article_quantity = 1
+article2.article_price_net = 1848
+article2.article_price_gross = 2199
 obj.add_article(article2)
+
+total = Total()
+total.shipping_name = "Express-Versand"
+total.shipping_price_net = 671
+total.shipping_price_gross = 799
+total.rebate_net = 0
+total.rebate_gross = 0
+total.order_amount_net = 36049
+total.order_amount_gross = 42898
+total.currency = "EUR"
+total.reference = customer_reference
+obj.total = total
+
+bank_account = BankAccount()
+bank_account.accountholder = "Thomas Testkunde"
+bank_account.accountnumber = "DE12500105170648489890"
+obj.bank_account = bank_account
+
+rate_request = RateRequest()
+rate_request.ratecount = 6
+rate_request.termin_months = 6
+rate_request.totalamountgross = 45398
+obj.rate_request = rate_request
 
 response = manager.preauthorise(obj)
 print("\nThe response:\n{}".format(response))
@@ -75,17 +88,12 @@ if response.is_successful() is not True:
     print("Ending the test")
     sys.exit()
 
-obj = CaptureRequest(response.transaction_id, 1475, "EUR", customer_reference)
-
-response = manager.capture(obj)
-print("\nThe response:\n{}".format(response))
-
-if response.is_successful() is not True:
-    print("Ending the test")
-    sys.exit()
-
-obj = InvoiceCreatedRequest(1475, "EUR", customer_reference, 1)
-obj.invoice_amount_net = 1250
+obj = InvoiceCreatedRequest(42898, "EUR", customer_reference, 1)
+obj.invoice_amount_net = 36049
+obj.invoice_amount_gross = 42898
+obj.shipping_name = "Express-Versand"
+obj.shipping_price_net = 671
+obj.shipping_price_gross = 799
 
 response = manager.create_invoice(obj)
 print("\nThe response:\n{}".format(response))
@@ -94,6 +102,6 @@ if response.is_successful() is not True:
     print("Ending the test")
     sys.exit()
 
-obj = CancelRequest(customer_reference, 1475, "EUR")
+obj = CancelRequest(customer_reference, 42898, "EUR")
 response = manager.cancel(obj)
 print("\nThe response:\n{}".format(response))

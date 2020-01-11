@@ -1,4 +1,4 @@
-from PreauthorizeRequest import preauthorize, PreauthorizeRequest, BankAccount, CustomerDetails, Total, Article
+from billpay.PreauthorizeRequest import preauthorize, PreauthorizeRequest, BankAccount, CustomerDetails, Total, Article
 import xml.etree.cElementTree as ET
 import requests
 import os
@@ -8,6 +8,7 @@ obj = PreauthorizeRequest()
 obj.mid = os.environ['BILLPAY_MERCHANT_ID']
 obj.pid = os.environ['BILLPAY_PORTAL_ID']
 obj.password_hash = os.environ['BILLPAY_PASSWORD_HASH']
+obj.url = os.environ['BILLPAY_API_URL']
 obj.payment_type = PreauthorizeRequest.DIRECT_DEBIT
 
 customer_details = CustomerDetails()

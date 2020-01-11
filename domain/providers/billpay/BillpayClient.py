@@ -1,18 +1,18 @@
-from PreauthorizeRequest import PreauthorizeRequest, PreauthorizeResponse
-from CaptureRequest import CaptureRequest, CaptureResponse
-from InvoiceCreatedRequest import InvoiceCreatedRequest, InvoiceCreatedResponse
-from CancelRequest import CancelRequest, CancelResponse
-from DefaultRequest import DefaultRequest, ErrorResponse
+from .PreauthorizeRequest import PreauthorizeRequest, PreauthorizeResponse
+from .CaptureRequest import CaptureRequest, CaptureResponse
+from .InvoiceCreatedRequest import InvoiceCreatedRequest, InvoiceCreatedResponse
+from .CancelRequest import CancelRequest, CancelResponse
+from .DefaultRequest import DefaultRequest, ErrorResponse
 import xml.etree.cElementTree as ET
 import requests
 
 
 class BillpayClient:
-    def __init__(self, mid: str, pid: str, password_hash: str):
+    def __init__(self, mid: str, pid: str, password_hash: str, url: str):
         self._mid = mid
         self._pid = pid
         self._password_hash = password_hash
-        self.url = 'https://test-api.billpay.de/v2/xml/offline'
+        self._url = url
 
     def preauthorise(self, obj: PreauthorizeRequest) -> PreauthorizeResponse:
         return self._send_request(obj)
@@ -35,7 +35,7 @@ class BillpayClient:
         print(xmlstr)
 
         headers = {'Content-Type': 'application/xml/'}
-        r = requests.post(self.url + obj.get_request_endpoint(), data=xmlstr, headers=headers)
+        r = requests.post(self._url + obj.get_request_endpoint(), data=xmlstr, headers=headers)
 
         print(r.text)
         if r.status_code == 200:
@@ -57,3 +57,4 @@ class BillpayClient:
             }[response_type](root)
         else:
             return ErrorResponse(root)
+

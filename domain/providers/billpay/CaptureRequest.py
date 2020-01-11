@@ -1,5 +1,5 @@
-from DefaultRequest import DefaultRequest, DefaultResponse, ET
-from CommonNodes import InvoiceBankAccount
+from .DefaultRequest import DefaultRequest, DefaultResponse, ET
+from .CommonNodes import InvoiceBankAccount
 
 
 class CaptureRequest(DefaultRequest):
