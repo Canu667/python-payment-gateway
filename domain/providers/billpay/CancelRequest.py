@@ -1,16 +1,21 @@
-from DefaultRequest import DefaultRequest, ET
+from DefaultRequest import DefaultRequest, DefaultResponse, ET
 
 
 class CancelRequest(DefaultRequest):
+
+    TYPE = "CANCEL"
+
     def __init__(self, reference: str, order_amount_gross: int, currency: str):
         super().__init__()
-        self._request_type = "CANCEL"
 
         self.order_amount_gross = str(order_amount_gross)
         self.currency = currency
         self.reference = reference
 
-        self.params['requesttype'] = self._request_type
+        self.params['requesttype'] = self.TYPE
+
+    def get_request_endpoint(self) -> str:
+        return '/cancel'
 
     def build(self):
         data = super().build()
@@ -23,9 +28,9 @@ class CancelRequest(DefaultRequest):
         return data
 
 
-class CancelResponse:
-    def __init__(self, xml: str):
-        root = ET.fromstring(xml)
+class CancelResponse(DefaultResponse):
+    def __init__(self, root: ET):
+        super().__init__(root)
 
         self.customer_message = root.attrib['customermessage']
         self.developer_message = root.attrib['developermessage']

@@ -1,13 +1,20 @@
-from PreauthorizeRequest import preauthorize, PreauthorizeRequest, CustomerDetails, Total, Article, BankAccount, RateRequest
-import xml.etree.cElementTree as ET
-import requests
+from PreauthorizeRequest import PreauthorizeRequest, CustomerDetails, Total, Article, BankAccount, RateRequest
+from BillpayClient import BillpayClient
+from InvoiceCreatedRequest import InvoiceCreatedRequest
+from CancelRequest import CancelRequest
 import os
+import sys
+import time
+
+manager = BillpayClient(
+    mid=os.environ['BILLPAY_MERCHANT_ID'],
+    pid=os.environ['BILLPAY_PORTAL_ID'],
+    password_hash=os.environ['BILLPAY_PASSWORD_HASH']
+)
+customer_reference = str(int(time.time())) + "TEST"
+print("Reference used: {}".format(customer_reference))
 
 obj = PreauthorizeRequest()
-
-obj.mid = os.environ['BILLPAY_MERCHANT_ID']
-obj.pid = os.environ['BILLPAY_PORTAL_ID']
-obj.password_hash = os.environ['BILLPAY_PASSWORD_HASH']
 obj.terms_accepted = PreauthorizeRequest.TERMS_AND_CONDITIONS_ACCEPTED
 obj.payment_type = PreauthorizeRequest.PAYLATER
 obj.type_capture = PreauthorizeRequest.CAPTURE_AUTO
@@ -59,7 +66,7 @@ total.rebate_gross = 0
 total.order_amount_net = 36049
 total.order_amount_gross = 42898
 total.currency = "EUR"
-total.reference = "0000012PL"
+total.reference = customer_reference
 obj.total = total
 
 bank_account = BankAccount()
@@ -73,13 +80,27 @@ rate_request.termin_months = 6
 rate_request.totalamountgross = 45398
 obj.rate_request = rate_request
 
-xmlstr = ET.tostring(obj.build(), encoding='utf8', method='xml').decode()
-print("\nXML Sent: {}".format(xmlstr))
+response = manager.preauthorise(obj)
+print("\nThe response:\n{}".format(response))
 
-headers = {'Content-Type': 'application/xml/'}
-r = requests.post('https://test-api.billpay.de/v2/xml/offline/preauthorize', data=xmlstr, headers=headers)
+if response.is_successful() is not True:
+    print("Ending the test")
+    sys.exit()
 
-print("\nResponse Received: {}".format(r.text))
-if r.status_code == 200:
-    response = preauthorize(r.text)
-    print("\nThe response:\n{}".format(response))
+obj = InvoiceCreatedRequest(42898, "EUR", customer_reference, 1)
+obj.invoice_amount_net = 36049
+obj.invoice_amount_gross = 42898
+obj.shipping_name = "Express-Versand"
+obj.shipping_price_net = 671
+obj.shipping_price_gross = 799
+
+response = manager.create_invoice(obj)
+print("\nThe response:\n{}".format(response))
+
+if response.is_successful() is not True:
+    print("Ending the test")
+    sys.exit()
+
+obj = CancelRequest(customer_reference, 42898, "EUR")
+response = manager.cancel(obj)
+print("\nThe response:\n{}".format(response))

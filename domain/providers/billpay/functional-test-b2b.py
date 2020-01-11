@@ -1,13 +1,21 @@
-from PreauthorizeRequest import preauthorize, CompanyDetails, PreauthorizeRequest, CustomerDetails, Total, Article
-import xml.etree.cElementTree as ET
-import requests
+from PreauthorizeRequest import CompanyDetails, PreauthorizeRequest, CustomerDetails, Total, Article
+from CaptureRequest import CaptureRequest
+from BillpayClient import BillpayClient
+from InvoiceCreatedRequest import InvoiceCreatedRequest
+from CancelRequest import CancelRequest
 import os
+import sys
+import time
+
+manager = BillpayClient(
+    mid=os.environ['BILLPAY_MERCHANT_ID'],
+    pid=os.environ['BILLPAY_BUSINESS_PORTAL_ID'],
+    password_hash=os.environ['BILLPAY_BUSINESS_PASSWORD_HASH']
+)
+customer_reference = str(int(time.time())) + "TEST"
+print("Reference used: {}".format(customer_reference))
 
 obj = PreauthorizeRequest()
-
-obj.mid = os.environ['BILLPAY_MERCHANT_ID']
-obj.pid = os.environ['BILLPAY_BUSINESS_PORTAL_ID']
-obj.password_hash = os.environ['BILLPAY_BUSINESS_PASSWORD_HASH']
 obj.type_capture = PreauthorizeRequest.CAPTURE_MANUAL
 
 customer_details = CustomerDetails()
@@ -47,7 +55,7 @@ total.rebate_gross = 0
 total.order_amount_net = 1250
 total.order_amount_gross = 1475
 total.currency = "EUR"
-total.reference = "0000005"
+total.reference = customer_reference
 obj.total = total
 
 article = Article()
@@ -68,13 +76,36 @@ article2.article_price_net = "250"
 article2.article_price_gross = "275"
 obj.add_article(article2)
 
-xmlstr = ET.tostring(obj.build(), encoding='utf8', method='xml').decode()
-print("\nXML Sent: {}".format(xmlstr))
+response = manager.preauthorise(obj)
+print("\nThe response:\n{}".format(response))
 
-headers = {'Content-Type': 'application/xml/'}
-r = requests.post('https://test-api.billpay.de/v2/xml/offline/preauthorize', data=xmlstr, headers=headers)
-print("\nResponse Received: {}".format(r.text))
+if response.is_successful() is not True:
+    print("Ending the test")
+    sys.exit()
 
-if r.status_code == 200:
-    response = preauthorize(r.text)
-    print("\nThe response:\n{}".format(response))
+obj = CaptureRequest(response.transaction_id, 1475, "EUR", customer_reference)
+
+response = manager.capture(obj)
+print("\nThe response:\n{}".format(response))
+
+if response.is_successful() is not True:
+    print("Ending the test")
+    sys.exit()
+
+obj = InvoiceCreatedRequest(1475, "EUR", customer_reference, 1)
+obj.invoice_amount_net = 1250
+obj.invoice_amount_gross = 1475
+obj.shipping_name = "Express-Versand"
+obj.shipping_price_net = 500
+obj.shipping_price_gross = 650
+
+response = manager.create_invoice(obj)
+print("\nThe response:\n{}".format(response))
+
+if response.is_successful() is not True:
+    print("Ending the test")
+    sys.exit()
+
+obj = CancelRequest(customer_reference, 1475, "EUR")
+response = manager.cancel(obj)
+print("\nThe response:\n{}".format(response))

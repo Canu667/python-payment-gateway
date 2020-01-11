@@ -1,12 +1,13 @@
-from DefaultRequest import DefaultRequest, ET
+from DefaultRequest import DefaultRequest, DefaultResponse, ET
 from CommonNodes import InvoiceBankAccount
 
 
 class CaptureRequest(DefaultRequest):
+
+    TYPE = "CAPTURE"
+
     def __init__(self, transaction_id: str, order_amount_gross: int, currency: str, reference: str):
         super().__init__()
-        self._request_type = "CAPTURE"
-
         self.transaction_id = transaction_id
         self.order_amount_gross = str(order_amount_gross)
         self.currency = currency
@@ -14,25 +15,28 @@ class CaptureRequest(DefaultRequest):
         self.merchant_invoice_number = ''
         self.customer_id = ''
 
-        self.params['requesttype'] = self._request_type
+        self.params['requesttype'] = self.TYPE
+
+    def get_request_endpoint(self) -> str:
+        return '/capture'
 
     def build(self):
         data = super().build()
 
         ET.SubElement(data, "capture_params", {
-            "transactionid": self.transaction_id,
-            "orderamountgross": self.order_amount_gross,
-            "currency": self.currency,
-            "reference": self.reference,
-            "merchantinvoicenumber": self.merchant_invoice_number,
-            "customerid": self.customer_id,
+            "transactionid": str(self.transaction_id),
+            "orderamountgross": str(self.order_amount_gross),
+            "currency": str(self.currency),
+            "reference": str(self.reference),
+            "merchantinvoicenumber": str(self.merchant_invoice_number),
+            "customerid": str(self.customer_id),
         })
         return data
 
 
-class CaptureResponse:
-    def __init__(self, xml: str):
-        root = ET.fromstring(xml)
+class CaptureResponse(DefaultResponse):
+    def __init__(self, root: ET):
+        super().__init__(root)
 
         self.customer_message = root.attrib['customermessage']
         self.developer_message = root.attrib['developermessage']

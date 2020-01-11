@@ -1,4 +1,4 @@
-from DefaultRequest import DefaultRequest, ET
+from DefaultRequest import DefaultRequest, DefaultResponse, ET
 from CommonNodes import BillpayNode, CustomerRestriction, InvoiceBankAccount, PaylaterDetailsNode
 from typing import Optional
 
@@ -152,6 +152,7 @@ class RateRequest(BillpayNode):
         self.termin_months = ''
         self.total_amount_gross = ''
 
+
 class AsyncRequest():
     def __init__(self):
         self.redirect_url = ""
@@ -178,10 +179,11 @@ class PreauthorizeRequest(DefaultRequest):
     ORIGIN_OFFLINE = 'p'
     ORIGIN_TELESALES = 't'
 
+    TYPE = "PREAUTHORIZE"
+
     def __init__(self):
         super().__init__()
-        self._request_type = "PREAUTHORIZE"
-        
+
         self._customer_details = CustomerDetails()
         self._shipping_details = ShippingDetails()
         self._total = Total()
@@ -196,6 +198,11 @@ class PreauthorizeRequest(DefaultRequest):
         self.payment_type = PreauthorizeRequest.INVOICE
         self.terms_accepted = PreauthorizeRequest.TERMS_AND_CONDITIONS_ACCEPTED
         self.expected_day_shipping = "0"
+
+        self.params['requesttype'] = self.TYPE
+
+    def get_request_endpoint(self) -> str:
+        return '/preauthorize'
 
     @property
     def bank_account(self) -> Optional[BankAccount]:
@@ -257,7 +264,6 @@ class PreauthorizeRequest(DefaultRequest):
         self._articles.append(value)
 
     def build(self):
-        self.params['requesttype'] = str(self._request_type)
         self.params['tcaccepted'] = str(self.terms_accepted)
         self.params['expecteddaystillshipping'] = str(self.expected_day_shipping)
         self.params['manualcapture'] = str(self.type_capture)
@@ -290,36 +296,9 @@ class PreauthorizeRequest(DefaultRequest):
         return data
 
 
-def preauthorize(xml: str):
-    root = ET.fromstring(xml)
-    error_code = int(root.attrib['errorcode'])
-
-    if error_code == 0:
-        return PreauthorizeResponse(root)
-    else:
-        return ErrorResponse(root)
-
-
-class ErrorResponse:
+class PreauthorizeResponse(DefaultResponse):
     def __init__(self, root: ET):
-        self.customer_message = root.attrib['customermessage']
-        self.developer_message = root.attrib['developermessage']
-        self.error_code = int(root.attrib['errorcode'])
-        self.merchant_message = root.attrib['merchantmessage']
-        self.response_type = root.attrib['responsetype']
-
-    def __str__(self):
-        return ('ErrorReponse(\n'
-                'customer_message: {customer_message}\n'
-                'developer_message: {developer_message}\n'
-                'error_code: {error_code}\n'
-                'merchant_message: {merchant_message}\n'
-                'response_type: {response_type}'
-                ')\n').format(**self.__dict__)
-
-
-class PreauthorizeResponse():
-    def __init__(self, root: ET):
+        super().__init__(root)
         self.response_type = root.attrib['responsetype']
         self.error_code = int(root.attrib['errorcode'])
         self.status = root.attrib['status']
