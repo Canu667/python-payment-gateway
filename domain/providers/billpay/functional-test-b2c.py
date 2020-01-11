@@ -86,10 +86,6 @@ if response.is_successful() is not True:
 
 obj = InvoiceCreatedRequest(1475, "EUR", customer_reference, 1)
 obj.invoice_amount_net = 1250
-obj.invoice_amount_gross = 1475
-obj.shipping_name = "Express-Versand"
-obj.shipping_price_net = 500
-obj.shipping_price_gross = 650
 
 response = manager.create_invoice(obj)
 print("\nThe response:\n{}".format(response))
