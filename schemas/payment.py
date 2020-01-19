@@ -1,14 +1,17 @@
 from marshmallow_objects import Model, NestedModel, fields
+from marshmallow import Schema
 
 
 class ReservedPaymentDto(Model):
     id = fields.Int(required=True, data_key='id')
 
 
-class PaymentResponseDto(Model):
+class PaymentResponseDto(Schema):
     id = fields.Int(required=True, data_key='id')
     payment_method = fields.String(required=True, data_key='payment_method')
     amount = fields.Int(required=True, data_key='amount')
+    status = fields.String(required=True, data_key='status')
+    transaction_id = fields.String(required=True, data_key='transaction_id')
 
 
 class ItemSchema(Model):

@@ -16,13 +16,7 @@ class PaymentResource(Resource):
         if payment is None:
             return {'message': 'Payment not found'}, HTTPStatus.NOT_FOUND
 
-        response_dto = PaymentResponseDto(**{
-            'id': payment.id,
-            'payment_method': payment.payment_method,
-            'amount': payment.amount,
-        })
-
-        return response_dto.dump(), HTTPStatus.OK
+        return PaymentResponseDto().dump(payment), HTTPStatus.OK
 
 
 class PaymentCreateResource(Resource):
@@ -48,12 +42,7 @@ class PaymentCreateResource(Resource):
         payment.transaction_id = response.transaction_id
         payment.save()
 
-        response_dto = PaymentResponseDto(**{
-            'id': payment.id,
-            'payment_method': payment.payment_method,
-            'amount': payment.amount
-        })
-        return response_dto.dump(), HTTPStatus.CREATED
+        return PaymentResponseDto().dump(payment), HTTPStatus.CREATED
 
 
 class PaymentCaptureResource(Resource):
@@ -69,7 +58,7 @@ class PaymentCaptureResource(Resource):
         payment.status = PaymentStatus.CAPTURED
         payment.save()
 
-        return None, HTTPStatus.OK
+        return PaymentResponseDto().dump(payment), HTTPStatus.OK
 
 
 class PaymentActivateResource(Resource):
@@ -85,7 +74,7 @@ class PaymentActivateResource(Resource):
         payment.status = PaymentStatus.FINISHED
         payment.save()
 
-        return None, HTTPStatus.OK
+        return PaymentResponseDto().dump(payment), HTTPStatus.OK
 
 
 def initialise_payment():
