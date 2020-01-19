@@ -1,0 +1,149 @@
+{
+	"info": {
+		"_postman_id": "a89ac2b5-28fd-4236-8eea-af042ef9cf73",
+		"name": "Payment Gateway",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Payment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"reference_id\": \"000006\",\n  \"currency\": \"EUR\",\n  \"order\": {\n  \t\t\"gross_amount\": 1475,\n  \t\t\"net_amount\": 1250,\n  \t\t\"discount_gross_amount\": 0,\n  \t\t\"discount_net_amount\": 0,\n  \t\t\"items\": [\n  \t\t\t{\n  \t\t\t\t\"id\": 1234,\n  \t\t\t\t\"name\": \"test1\",\n  \t\t\t\t\"type\": \"0\",\n  \t\t\t\t\"quantity\": 1,\n  \t\t\t\t\"net_amount\": 250,\n  \t\t\t\t\"gross_amount\": 275\n  \t\t\t},\n  \t\t\t{\n  \t\t\t\t\"id\": 2345,\n  \t\t\t\t\"name\": \"test2\",\n  \t\t\t\t\"type\": \"0\",\n  \t\t\t\t\"quantity\": 2,\n  \t\t\t\t\"net_amount\": 250,\n  \t\t\t\t\"gross_amount\": 275\n  \t\t\t}\n  \t\t]\n  },\n  \"shipping\": {\n  \t\t\"name\": \"Express-Versand\",\n  \t\t\"gross_amount\":650,\n  \t\t\"net_amount\":500\n  },\n  \"customer\": {\n    \"first_name\": \"Arthur\",\n    \"last_name\": \"Dent\",\n    \"type\": \"private\",\n    \"email\": \"arthur@dent.de\",\n    \"phone\": \"\",\n    \"mobile_phone\": \"01775112383\",\n    \"birthday\": \"19740419\",\n    \"ip\": \"85.214.7.10\"\n  },\n  \"billing_address\": {\n    \"first_name\": \"Arthur\",\n    \"last_name\": \"Dent\",\n    \"company_name\": \"Company\",\n    \"street\": \"TestStreet\",\n    \"street_number\": \"42\",\n    \"city\": \"TestCity\",\n    \"zip\": \"12345\",\n    \"country\": {\n      \"iso2\": \"DEU\",\n      \"name\": \"Deutschland\"\n    },\n    \"additional\": \"Some additions\"\n  },\n  \"delivery_address\": {\n    \"first_name\": \"Arthur\",\n    \"last_name\": \"Dent\",\n    \"company_name\": \"Company\",\n    \"street\": \"TestStreet\",\n    \"street_number\": \"42\",\n    \"city\": \"TestCity\",\n    \"zip\": \"12345\",\n    \"country\": {\n      \"iso2\": \"DE\",\n      \"name\": \"Deutschland\"\n    },\n    \"additional\": \"Some additions\"\n  },\n  \"payment_configuration\": {\n    \"payment_method\": \"billpay\",\n    \"authorisation_url\": {\n      \"success_url\": \"http://www.notebooksbilliger.de\",\n      \"error_url\": \"http://www.notebooksbilliger.de\",\n      \"cancel_url\": \"http://www.notebooksbilliger.de\"\n    }\n  }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/payment",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"payment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Payment",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:5000/payment/5",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"payment",
+						"5"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Capture",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/payment/capture",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"payment",
+						"capture"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Activate",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"id\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/payment/activate",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"payment",
+						"activate"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

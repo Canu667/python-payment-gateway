@@ -1,19 +1,33 @@
-from flask import Flask, request
+from flask import Flask
 from flask_restful import Api
-from resources.payment import PaymentResource, PaymentCreateResource
+from resources.payment import (
+    PaymentResource,
+    PaymentCreateResource,
+    PaymentCaptureResource,
+    PaymentActivateResource
+)
 from extensions import db
 from flask_migrate import Migrate
+from flask_injector import FlaskInjector
+from injector import Injector
+from domain.payment_manager import PaymentManagerModule
 
 
 def register_extensions(app):
     db.init_app(app)
-    migrate = Migrate(app, db)
+    Migrate(app, db)
+
+    injector = Injector([PaymentManagerModule(app)])
+    FlaskInjector(app=app, injector=injector)
+
 
 def register_resources(app):
     api = Api(app)
 
     api.add_resource(PaymentResource, '/payment/<int:payment_id>')
     api.add_resource(PaymentCreateResource, '/payment')
+    api.add_resource(PaymentCaptureResource, '/payment/capture')
+    api.add_resource(PaymentActivateResource, '/payment/activate')
 
 
 def create_app():
